@@ -6,7 +6,7 @@ main: out/main.o
 
 out/main.o: clean
 	mkdir -p out
-	gcc -c src/main.c -o out/main.o
+	gcc -c src/main.c -o out/main.o --ansi --pedantic -Wall -Wextra -Werror
 
 clean:
 	rm -f main out/main.o. out/main_d out/main_d.o
