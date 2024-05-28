@@ -5,18 +5,57 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 
-int main(void)
+/* client is the file descriptor of the client socket */
+int handle_client(int client)
 {
     void *buff = malloc(1024);
     int r = 0;
+    char *incoming = (char *)buff;
+    int i = 0;
+
+    r = recv(client, buff, 1024, 0);
+
+    if (r < 0)
+    {
+        perror("recv");
+        return 1;
+    }
+
+    printf("Received %d bytes\n", r);
+
+    printf("Received: ");
+    while (i < r)
+    {
+        printf("%02x", incoming[i]);
+        i++;
+    }
+    printf("\n");
+
+    r = close(client);
+
+    if (r < 0)
+    {
+        perror("close");
+        return 1;
+    }
+
+    return r;
+}
+
+int main(void)
+{
+    int r = 0;
     int s;
     int c;
-    struct sockaddr_in addr = {
-        .sin_family = AF_INET,
-        .sin_port = htons(8226),
-        .sin_addr = {.s_addr = INADDR_ANY}};
-
+    struct sockaddr_in addr;
     struct sockaddr_in client_addr;
+    socklen_t client_addr_len;
+
+    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_port = htons(8226);
+    addr.sin_family = AF_INET;
+
+    client_addr_len = sizeof(client_addr);
 
     printf("Hello, World!\n");
 
@@ -51,7 +90,7 @@ int main(void)
         return 1;
     }
 
-    r = getpeername(c, (struct sockaddr *)&client_addr, (socklen_t[]){sizeof(client_addr)});
+    r = getpeername(c, (struct sockaddr *)&client_addr, &client_addr_len);
 
     if (r < 0)
     {
@@ -61,24 +100,13 @@ int main(void)
 
     printf("Connection from %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
-    r = recv(c, buff, 1024, 0);
+    r = handle_client(c);
 
     if (r < 0)
     {
-        perror("recv");
+        perror("handle_client");
         return 1;
     }
-
-    printf("Received %d bytes\n", r);
-
-    char *incoming = (char *)buff;
-
-    printf("Received: ");
-    for (int i = 0; i < r; i++)
-    {
-        printf("%02x", incoming[i]);
-    }
-    printf("\n");
 
     r = close(s);
 
